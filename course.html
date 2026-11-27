@@ -120,6 +120,7 @@ select option { font: 16px var(--texte); text-transform: none; color: var(--crem
     <div class="vitesses" role="group" aria-label="Mode">
       <button class="btn" id="m-direct" aria-pressed="true">● En direct</button><button class="btn" id="m-rejouer">Rejouer</button>
     </div>
+    <a class="btn" id="lien-demo" href="/course.html?demo" style="text-decoration:none;border-style:dashed;color:var(--or);border-color:var(--or)">Voir une démo ›</a>
   </div>
   <div class="barre" id="commandes" hidden>
     <button class="btn principal" id="jouer">▶ Lancer</button>
@@ -488,7 +489,7 @@ async function charger(garderT) {
   try { await null; if (DEMO_FORCEE) throw new Error("démo demandée");   // await : laisse le script finir de se charger (DEMO)
   epreuves = await lire("liste"); if (!Array.isArray(epreuves) || !epreuves.length) throw new Error("liste vide"); }
   catch (e) { demo = true; epreuves = DEMO.liste(); $("demo").hidden = false; }
-  if (DEMO_FORCEE) $("retour").href = "/?demo";
+  if (DEMO_FORCEE) { $("retour").href = "/?demo"; $("lien-demo").href = "/course.html"; $("lien-demo").textContent = "Quitter la démo ›"; }
   const p = new URLSearchParams(location.search).get("epreuve");
   choix = epreuves.some(x => x.id === p) ? p : epreuves[0].id;
   $("categorie").innerHTML = epreuves.map(ep => `<option value="${esc(ep.id)}"${ep.id === choix ? " selected" : ""}>${esc(ep.code)} · ${esc(ep.nom)}</option>`).join("");
