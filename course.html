@@ -107,7 +107,7 @@ select option { font: 16px var(--texte); text-transform: none; color: var(--crem
 <header class="top"><div class="wrap">
   <div class="logo" aria-hidden="true">HoN</div>
   <div class="marque"><b>Head of Nantes</b><span>Régate internationale · 6&amp;7 mars 2027</span></div>
-  <a class="retour" href="/">← Temps</a>
+  <a class="retour" id="retour" href="/">← Temps</a>
 </div></header>
 
 <main class="wrap">
@@ -149,6 +149,7 @@ const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": 
 const secondes = txt => { const m = /^(?:(\d+):)?(\d+):(\d+(?:[.,]\d+)?)$/.exec(String(txt ?? "").trim()); return m ? (+(m[1] || 0)) * 3600 + (+m[2]) * 60 + parseFloat(m[3].replace(",", ".")) : null; };
 const mmss = s => { s = Math.max(0, s); const m = Math.floor(s / 60), r = Math.floor(s % 60); return m + ":" + String(r).padStart(2, "0"); };
 const fin1 = s => { const m = Math.floor(s / 60), r = (s - m * 60).toFixed(1); return m ? m + ":" + r.padStart(4, "0") : r; };
+const DEMO_FORCEE = /[?&]demo\b/.test(location.search);
 let demo = false;   // true : connecteur.php absent, données simulées
 const lireConnecteur = async q => { const r = await fetch(CONNECTEUR + "?" + q, { cache: "no-store" }); if (!r.ok) throw new Error(r.status); return r.json(); };
 const lire = q => demo ? Promise.resolve(q === "liste" ? DEMO.liste() : DEMO.epreuve(decodeURIComponent(q.slice(6)))) : lireConnecteur(q);
@@ -483,12 +484,15 @@ async function charger(garderT) {
 }
 
 (async () => {
-  try { epreuves = await lire("liste"); if (!Array.isArray(epreuves) || !epreuves.length) throw new Error("liste vide"); }
+  // Adresse « course.html?demo » : course simulée en direct, même sans course réelle en cours
+  try { await null; if (DEMO_FORCEE) throw new Error("démo demandée");   // await : laisse le script finir de se charger (DEMO)
+  epreuves = await lire("liste"); if (!Array.isArray(epreuves) || !epreuves.length) throw new Error("liste vide"); }
   catch (e) { demo = true; epreuves = DEMO.liste(); $("demo").hidden = false; }
+  if (DEMO_FORCEE) $("retour").href = "/?demo";
   const p = new URLSearchParams(location.search).get("epreuve");
   choix = epreuves.some(x => x.id === p) ? p : epreuves[0].id;
   $("categorie").innerHTML = epreuves.map(ep => `<option value="${esc(ep.id)}"${ep.id === choix ? " selected" : ""}>${esc(ep.code)} · ${esc(ep.nom)}</option>`).join("");
-  $("categorie").onchange = () => { for (const p of pions.values()) p.remove(); pions.clear(); choix = $("categorie").value; vus = new Map(); premiereLecture = true; selection = null; pause(); history.replaceState(null, "", "?epreuve=" + choix); charger(false); };
+  $("categorie").onchange = () => { for (const p of pions.values()) p.remove(); pions.clear(); choix = $("categorie").value; vus = new Map(); premiereLecture = true; selection = null; pause(); history.replaceState(null, "", "?" + (DEMO_FORCEE ? "demo&" : "") + "epreuve=" + choix); charger(false); };
   await charger(false);
   changerMode("direct");
   try { initCarte(); } catch (e) { $("carte").hidden = true; }

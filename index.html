@@ -388,11 +388,14 @@ async function lire(params) {
 
 async function demarrer() {
   try {
+    // Adresse « /?demo » : données simulées, même sans course réelle en cours
+    if (/[?&]demo\b/.test(location.search)) throw new Error("démo demandée");
     const liste = await lire("liste");
     if (!Array.isArray(liste) || !liste.length) throw new Error("liste vide");
     source = "connecteur"; epreuves = liste;
   } catch (e) {
     source = "demo"; epreuves = DEMO.liste(); $("demo").hidden = false;
+    document.querySelector(".lien-course").href = "/course.html?demo";
   }
   try { choix = localStorage.getItem("hon-cat"); } catch (e) {}
   if (!epreuves.some(ep => ep.id === choix)) choix = epreuves[0].id;
